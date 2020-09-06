@@ -5,6 +5,7 @@
 var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
+var moment = require('moment');
 
 // enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
 // so that your API is remotely testable by FCC 
@@ -33,8 +34,13 @@ app.get('/api/timestamp/:timestamp', (req, res) => {
 
   let date;
 
+  console.log(req.params.timestamp);
+
   if(!req.params) {
     date = new Date();
+  } else if(/\d{5,}/.test(req.params.timestamp)) {
+    const dateInt = parseInt(req.params.timestamp);
+    date = new Date(dateInt);
   } else {
     date = new Date(req.params.timestamp);
   }
@@ -42,8 +48,6 @@ app.get('/api/timestamp/:timestamp', (req, res) => {
   console.log(date);
 
   
-
-  if(isNaN(date)) res.send({error: "Invalid Date"});
 
   res.send({unix: date.getTime(), utc: date.toUTCString() });
 
