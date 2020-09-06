@@ -45,6 +45,10 @@ app.get('/api/timestamp/:timestamp', (req, res) => {
     date = new Date(req.params.timestamp);
   }
 
+  if(isNaN(date)) {
+    res.send({error: "Invalid Date"});
+  }
+
   console.log(date);
 
   
