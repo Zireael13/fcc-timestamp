@@ -6,12 +6,14 @@ var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 var moment = require('moment');
+var useragent = require('express-useragent');
 
 // enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
 // so that your API is remotely testable by FCC 
 var cors = require('cors');
 app.use(cors({optionSuccessStatus: 200}));  // some legacy browsers choke on 204
 
+app.use(useragent.express());
 
 app.use(bodyParser.urlencoded({extended: false}));
 
@@ -67,6 +69,19 @@ app.get('/api/timestamp/', (req, res) => {
   res.send({unix: date.getTime(), utc: date.toUTCString() });
 
  });
+
+
+app.get('/api/whoami', (req, res) => {
+  const lang = req.headers['accept-language'];
+  
+  res.send({
+    ipaddress: req.ip,
+    language: lang,
+    software: req.useragent.source
+  });
+
+
+})
 
 
 
