@@ -2,20 +2,40 @@
 // where your node app starts
 
 // init project
-var express = require('express');
-var app = express();
-var bodyParser = require('body-parser');
-var moment = require('moment');
-var useragent = require('express-useragent');
+require('dotenv').config();
+const express = require('express');
+const app = express();
+const bodyParser = require('body-parser');
+const moment = require('moment');
+const useragent = require('express-useragent');
+const dns = require('dns');
+const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 // enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
 // so that your API is remotely testable by FCC 
-var cors = require('cors');
+const cors = require('cors');
+const { doesNotMatch } = require('assert');
+const { url } = require('inspector');
 app.use(cors({optionSuccessStatus: 200}));  // some legacy browsers choke on 204
 
 app.use(useragent.express());
 
 app.use(bodyParser.urlencoded({extended: false}));
+
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+const { Schema } = mongoose;
+
+const urlSchema = new Schema({
+  hash: {type: String, required: true},
+  url: {type: String, required: true},
+});
+
+const shortUrl = mongoose.model('urlSchema', urlSchema);
 
 
 // http://expressjs.com/en/starter/static-files.html
@@ -83,9 +103,70 @@ app.get('/api/whoami', (req, res) => {
 
 })
 
+const createAndSaveUrl = (inputUrl, done) => {
+
+  const randomHash = crypto.randomBytes(3).toString('hex');
+  const newUrl = new shortUrl({
+    hash: randomHash,
+    url: inputUrl
+  });
+
+  newUrl.save((err, urlObj) => {
+    if (err) return console.error(err);
+    done(null, urlObj);
+  })
+
+}
+
+function addhttp(url) {
+  if (!/^(?:f|ht)tps?\:\/\//.test(url)) {
+      url = "http://" + url;
+  }
+  return url;
+}
+
+
+app.post('/api/shorturl/new', (req, res) => {
+  const inputUrl = req.body.url;
+  console.log(inputUrl);
+
+  let validAddress;
+
+  dns.lookup(inputUrl, (err, address, family) => {
+    validAddress = address;
+    console.log(validAddress);
+
+    if(validAddress === undefined){
+      res.send({error: "invalid URL"});
+      return;
+    }
+    
+    createAndSaveUrl(inputUrl, (err, urlObj) => {
+      res.send({original_url: urlObj.url, short_url: urlObj.hash});
+    });
+    
+  });
+})
+
+const findUrlByHash = (urlHash, done) => {
+  shortUrl.findOne(({hash: urlHash}), (err, urlObj) => {
+    if (err) return console.error(err);
+    done(null, urlObj);
+  })
+}
+
+app.get('/api/shorturl/:hash', (req, res) => {
+  console.log(req.params.hash);
+  findUrlByHash(req.params.hash, (err, urlObj) => {
+    if (err) throw new Error(err);
+
+    const url = addhttp(urlObj.url);
+    res.redirect(url);
+  })
+})
 
 
 // listen for requests :)
-var listener = app.listen(process.env.PORT || 5000, function () {
+const listener = app.listen(process.env.PORT || 5000, function () {
   console.log('Your app is listening on port ' + listener.address().port);
 });
