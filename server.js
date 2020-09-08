@@ -300,10 +300,13 @@ app.get('/api/exercise/log', (req, res) => {
       filteredExercises = filteredExercises.slice(0, limit);
     }
 
-    user.exercises = filteredExercises;
+    filteredExercises.map(exercise => {
+      exercise.date = exercise.date.toDateString();
+      return exercise;
+    })
+
     const count = user.exercises.length;
-    // const output = {_id: user._id, username: user.username, exercises: user.exercises, }
-    const output = {...user._doc, count: count};
+    const output = {_id: user._id, count: count, username: user.username, log: filteredExercises};
     console.log(output);
 
     res.send(output);
