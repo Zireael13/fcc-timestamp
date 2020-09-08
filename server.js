@@ -11,6 +11,7 @@ const useragent = require('express-useragent');
 const dns = require('dns');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const fileUpload = require('express-fileupload');
 
 // enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
 // so that your API is remotely testable by FCC 
@@ -22,6 +23,8 @@ app.use(cors({optionSuccessStatus: 200}));  // some legacy browsers choke on 204
 app.use(useragent.express());
 
 app.use(bodyParser.urlencoded({extended: false}));
+
+app.use(fileUpload());
 
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
@@ -314,6 +317,15 @@ app.get('/api/exercise/log', (req, res) => {
 
 });
 
+app.post('/api/fileanalyse', (req, res) => {
+  if (!req.files || Object.keys(req.files).length === 0) {
+    return res.status(400).send('No files were uploaded.');
+  }
+
+  const file = req.files.upfile;
+
+  res.send({name: file.name, type: file.mimetype, size: file.size});
+})
 
 
 // listen for requests :)
