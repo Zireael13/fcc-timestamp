@@ -204,7 +204,7 @@ const addExerciseToUser = (userId, description, duration, date, done) => {
     user.exercises.push(exercise);
     user.save((err, user) => {
       if (err) return console.error(err);
-      done(null, user);
+      done(null, user, exercise);
     })
   })
 }
@@ -244,13 +244,14 @@ app.post('/api/exercise/add', (req, res) => {
     date = new Date();
   }
 
-  addExerciseToUser(userId, description, duration, date, (err, user) => {
+  addExerciseToUser(userId, description, duration, date, (err, user, exercise) => {
+    console.log(exercise.duration);
     res.send({
       '_id': user._id,
       username: user.username,
-      date: date.toString(),
-      duration: duration,
-      description: description
+      date: exercise.date.toDateString(),
+      duration: parseInt(exercise.duration),
+      description: exercise.description
     });
   });
 
