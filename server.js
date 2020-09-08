@@ -248,7 +248,7 @@ app.post('/api/exercise/add', (req, res) => {
     res.send({
       '_id': user._id,
       username: user.username,
-      date: date.toString,
+      date: date.toString(),
       duration: duration,
       description: description
     });
